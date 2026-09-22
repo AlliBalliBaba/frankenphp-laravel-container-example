@@ -1,0 +1,16 @@
+# Minimal version, running octane with MAX_THREADS workers
+{$SERVER_NAME::80} {
+	route {
+		encode zstd br gzip
+
+		php_server {
+			root /app/public
+			worker {
+				file /app/vendor/laravel/octane/bin/frankenphp-worker.php
+				max_threads {$MAX_THREADS:20}
+				match *
+				{$WATCH}
+			}
+		}
+	}
+}

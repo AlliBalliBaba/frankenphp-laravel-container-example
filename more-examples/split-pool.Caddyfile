@@ -1,0 +1,24 @@
+# Split thread pool example, everything under /api goes to a separate pool
+# Use this technique if you need something similar to a connection pool for specific slow routes
+{$SERVER_NAME::80} {
+	route {
+		encode zstd br gzip
+
+		php_server {
+			root /app/public
+			worker {
+				file /app/vendor/laravel/octane/bin/frankenphp-worker.php
+				max_threads {$MAX_THREADS:20}
+				match /api/*
+				{$WATCH}
+			}
+
+			worker {
+				file /app/vendor/laravel/octane/bin/frankenphp-worker.php
+				max_threads {$MAX_THREADS:20}
+				match *
+				{$WATCH}
+			}
+		}
+	}
+}

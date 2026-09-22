@@ -1,0 +1,25 @@
+# All files are behind /assets, everything else goes to PHP
+{$SERVER_NAME::80} {
+	route {
+		encode zstd br gzip
+
+		@assets {
+			path /assets/*
+		}
+
+		# redirect everything behind /storage to S3
+		handle @assets {
+			file_server
+		}
+
+		php {
+			root /app/public
+			worker {
+				file /app/vendor/laravel/octane/bin/frankenphp-worker.php
+				max_threads {$MAX_THREADS:20}
+				match *
+				{$WATCH}
+			}
+		}
+	}
+}

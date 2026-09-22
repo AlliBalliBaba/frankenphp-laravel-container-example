@@ -1,0 +1,56 @@
+{
+	frankenphp {
+		# reject requests that are waiting too long for an available worker
+		max_wait_time 15s
+		php_ini {
+			# PHP configuration, feel free to adjust this as needed
+			post_max_size 100M
+			upload_max_filesize 100M
+			expose_php 0
+			variables_order EGPCS
+			memory_limit 512M
+
+			# OPCache configuration
+			opcache.enable_cli 1
+			opcache.memory_consumption 256M
+			opcache.use_cwd 0
+			opcache.max_file_size 0
+			opcache.max_accelerated_files 32531
+
+			# JIT configuration
+			opcache.jit_buffer_size 128M
+			opcache.jit tracing
+		}
+	}
+
+	# read/write timeouts for better resiliency
+	servers {
+		timeouts {
+			idle 30s
+			read_body 60s
+			read_header 30s
+			write 300s
+		}
+	}
+}
+
+# server runs at port 80 (HTTP), can be changed to any port or hostname, also with TLS
+{$SERVER_NAME::80} {
+	route {
+		encode zstd br gzip
+
+		php_server {
+			root /app/public
+			worker {
+				file /app/vendor/laravel/octane/bin/frankenphp-worker.php
+				num 4
+				max_threads 25
+				env APP_BASE_PATH /app
+				env APP_PUBLIC_PATH /app/public
+				env LARAVEL_OCTANE 1
+				match *
+				{$WATCH}
+			}
+		}
+	}
+}

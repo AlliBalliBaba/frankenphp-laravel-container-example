@@ -1,0 +1,48 @@
+# example on running with docker-compose in dev environment
+volumes:
+  pgvolume:
+
+services:
+  # run laravel at http://localhost:8123
+  laravel:
+    image: franken-laravel-base
+    container_name: eva_swoole_backend
+    volumes:
+      - .:/app
+    ports:
+      - "8123:80"
+    links:
+      - postgres
+    environment:
+      - "DB_PORT=5432"
+      - "DB_HOST=postgres"
+      - "DB_PASSWORD=secret"
+      - "DB_USERNAME=app"
+      - "DB_DATABASE=app"
+      - "WITH_QUEUE=true"
+      - "WATCH=watch /app/app/**/*.php /app/bootstrap/**/*.php /app/config/**/*.php /app/database/**/*.php /app/resources/**/*.php /app/routes/**/*.php"
+
+  # run postgres on http://localhost:5432
+  postgres:
+    image: postgres:18
+    environment:
+      POSTGRES_PASSWORD: secret
+      PGPASSWORD: secret
+      POSTGRES_USER: app
+      POSTGRES_DB: app
+    volumes:
+      - pgvolume:/var/lib/postgresql
+    ports:
+      - "5432:5432"
+
+  # run vite on http://localhost:8790
+  vite:
+    image: node:lts
+    working_dir: /app
+    command: bash -c '[ ! -d "node_modules" ] && npm install --ignore-scripts; npm run dev -- --port 8790 --host'
+    hostname: localhost
+    volumes:
+      - .:/app
+    ports:
+      - '8790:8790'
+    user: node

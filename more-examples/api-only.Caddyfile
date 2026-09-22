@@ -1,0 +1,16 @@
+# Api only version, no file server
+{$SERVER_NAME::80} {
+	route {
+		encode zstd br gzip
+
+		php {
+			root /app/public
+			worker {
+				file /app/vendor/laravel/octane/bin/frankenphp-worker.php
+				max_threads {$MAX_THREADS:20}
+				match *
+				{$WATCH}
+			}
+		}
+	}
+}
